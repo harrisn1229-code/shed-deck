@@ -1,13 +1,15 @@
 /* Note Cards service worker: the app opens from the cache with no connection,
    and a fresh copy is fetched in the background for next launch.
    Bump VERSION whenever any app file changes. Only caches named shed-deck-*
-   are ever cleared, so other apps on the same site keep theirs. */
+   are ever cleared, so other apps on the same site keep theirs.
+   Fetches skip the browser's HTTP cache (GitHub Pages lets it keep files for
+   10 minutes), so an update is picked up on the next launch, not 10 minutes later. */
 const PREFIX = "shed-deck-";
-const VERSION = PREFIX + "v2.3.0";
+const VERSION = PREFIX + "v2.4.0";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(VERSION).then((cache) => cache.addAll(SHELL)));
+  event.waitUntil(caches.open(VERSION).then((cache) => cache.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))));
   self.skipWaiting();
 });
 self.addEventListener("activate", (event) => {
@@ -17,8 +19,12 @@ self.addEventListener("activate", (event) => {
       .then(() => self.clients.claim())
   );
 });
+// Ask the server whether the file changed (a cheap 304 when it hasn't) and keep the answer.
 function refresh(request, cacheKey) {
-  return fetch(request).then((response) => {
+  const fresh = request.mode === "navigate"
+    ? new Request(request.url, { cache: "no-cache", credentials: "same-origin" })
+    : new Request(request, { cache: "no-cache" });
+  return fetch(fresh).then((response) => {
     if (response && response.ok) {
       const copy = response.clone();
       caches.open(VERSION).then((cache) => cache.put(cacheKey || request, copy));

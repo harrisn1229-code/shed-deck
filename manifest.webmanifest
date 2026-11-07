@@ -2,7 +2,7 @@
   "name": "Note Cards",
   "short_name": "Note Cards",
   "description": "Practice flashcards for modes, arpeggios, triads and 7th chords.",
-  "id": "./",
+  "id": "note-cards",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
