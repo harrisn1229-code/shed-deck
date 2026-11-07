@@ -282,6 +282,37 @@ button{font:inherit;color:inherit;-webkit-user-select:none;user-select:none;touc
 .steps li::before{counter-increment:s;content:counter(s);flex:none;width:1.5rem;height:1.5rem;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-text);font-weight:800;font-size:.8125rem;margin-top:.05rem}
 .steps b{color:var(--text)}
 
+.sheet-sec{display:grid;gap:.6rem}
+.sheet-sub{margin:.35rem 0 0;font-size:var(--t-label);font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sync[data-state="local"]::before{background:var(--muted);opacity:.5}
+.sync[data-state="syncing"]::before{background:var(--accent);animation:pulse .8s ease-in-out infinite alternate}
+@keyframes pulse{to{opacity:.25}}
+.code-card{display:grid;gap:.3rem;justify-items:center;text-align:center;padding:1rem .75rem;border-radius:var(--r-md);background:var(--accent-soft)}
+.code-card small{font-size:var(--t-label);font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-text)}
+.code{font-size:clamp(1.0625rem, .9rem + 1.2vw, 1.375rem);font-weight:800;letter-spacing:.06em;color:var(--text);-webkit-user-select:all;user-select:all;overflow-wrap:anywhere}
+.code-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem;margin-top:.35rem}
+.code-actions .ghost{background:var(--surface)}
+.code-form{display:grid;gap:.45rem}
+.field-label{font-size:.875rem;font-weight:600;color:var(--muted)}
+.code-row{display:flex;gap:.5rem}
+.field{flex:1;min-width:0;height:3rem;border:0;border-radius:var(--r-sm);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);padding:0 .9rem;
+  font:inherit;font-size:1rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text)}
+.field::placeholder{color:var(--muted);opacity:.55;font-weight:600}
+.field:focus{outline:none;box-shadow:inset 0 0 0 2px var(--accent)}
+.field-err{margin:0;font-size:.8125rem;font-weight:600;color:var(--st-rusty)}
+.btn-sm{min-height:2.5rem;padding:.5rem 1rem;font-size:.9375rem;border-radius:var(--r-sm)}
+.code-row .btn-sm{min-height:3rem}
+.row-ic.muted{background:var(--surface-3);color:var(--text)}
+.row.warn b{color:var(--st-rusty)}
+.foot{display:flex;justify-content:center;width:100%;border:0;background:none;cursor:pointer;margin:1.5rem 0 0;padding:.5rem;font-size:.8125rem;text-align:center;border-radius:var(--r-sm)}
+.install-banner{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;padding:.7rem .6rem .7rem .8rem;border-radius:var(--r-lg);background:var(--accent-soft);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent)}
+.ib-ic{width:2.5rem;height:2.5rem;border-radius:12px;display:grid;place-items:center;background:var(--accent);color:#fff;flex:none}
+.ib-ic svg{width:1.3rem;height:1.3rem}
+.ib-t{display:grid;flex:1;min-width:0;line-height:1.25}
+.ib-t b{font-weight:800}
+.ib-t small{font-size:.8125rem;color:var(--muted)}
+.ib-x{width:2rem;height:2rem;border:0;border-radius:50%;background:none;color:var(--muted);display:grid;place-items:center;cursor:pointer;flex:none}
+.ib-x svg{width:1rem;height:1rem}
 .toast{position:fixed;left:50%;bottom:calc(8.5rem + var(--safe-b));z-index:30;transform:translateX(-50%);width:max-content;max-width:calc(100% - 2rem);
   padding:.7rem 1.1rem;border-radius:999px;background:var(--text);color:var(--bg);font-size:.9375rem;font-weight:600;box-shadow:0 12px 30px rgb(0 0 0 / .25);animation:toast-in .2s ease-out}
 @keyframes toast-in{from{opacity:0;transform:translate(-50%,8px)}}
@@ -447,6 +478,12 @@ button{font:inherit;color:inherit;-webkit-user-select:none;user-select:none;touc
       </div>
     </header>
     <div class="page">
+      <div class="install-banner" id="install-banner" hidden>
+        <span class="ib-ic" aria-hidden="true"><svg viewBox="0 0 20 20"><rect x="3" y="2.5" width="14" height="15" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 6.5v6M7.3 9.8 10 12.5l2.7-2.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="ib-t"><b>Get the app</b><small id="install-banner-sub">Open Note Cards like any other app</small></span>
+        <button class="btn btn-primary btn-sm" type="button" id="install-go">Install</button>
+        <button class="ib-x" type="button" id="install-x" aria-label="Dismiss"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 6l8 8m0-8-8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      </div>
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-top">
           <div class="ring" id="ring" role="img"></div>
@@ -461,7 +498,7 @@ button{font:inherit;color:inherit;-webkit-user-select:none;user-select:none;touc
       </section>
       <h2 class="section-title">Decks <small id="decks-on"></small></h2>
       <div class="decks" id="decks"></div>
-      <p class="foot">Works offline. Ratings stay on this device.</p>
+      <button class="foot sync" type="button" id="foot" data-state="local"></button>
     </div>
   </main>
 
@@ -515,16 +552,42 @@ button{font:inherit;color:inherit;-webkit-user-select:none;user-select:none;touc
   <div class="sheet-in">
     <span class="grab" aria-hidden="true"></span>
     <div class="sheet-head"><h2 class="sheet-title" id="menu-title">Note Cards</h2><button class="icon-btn" type="button" data-close aria-label="Close"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5l9 9m0-9-9 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
-    <ol class="steps">
-      <li><span><b>Pick your cards.</b> Turn decks on and open one to choose keys, qualities and voicings.</span></li>
-      <li><span><b>Play what comes up.</b> Tap the card to flip it and check the notes, shapes and sound.</span></li>
-      <li><span><b>Rate it</b> Nailed, Solid or Rusty. Ratings collect on the home screen so you can aim practice at what still needs work.</span></li>
-    </ol>
-    <p class="sync" id="sync" data-state="loading"></p>
-    <div class="list">
-      <button class="row" type="button" id="backup" data-backup><span class="row-ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 10V2.5M5 5.2 8 2.3l3 2.9M3 9.5v3.2h10V9.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="row-t"><b>Back up ratings</b><small>Save a file you can import on any device</small></span></button>
-      <button class="row" type="button" id="import" data-import><span class="row-ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5V10M5 7.3 8 10.2l3-2.9M3 9.5v3.2h10V9.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="row-t"><b>Import ratings</b><small>Merge a backup file into this device</small></span></button>
-    </div>
+    <section class="sheet-sec" aria-labelledby="sync-title">
+      <h3 class="sheet-sub" id="sync-title">Sync across devices</h3>
+      <p class="sync" id="sync" data-state="local"></p>
+      <div class="sheet-sec" id="sync-ui"></div>
+    </section>
+    <section class="sheet-sec" id="install-sec" aria-labelledby="install-title">
+      <h3 class="sheet-sub" id="install-title">Get the app</h3>
+      <div class="list">
+        <button class="row" type="button" id="install-row"><span class="row-ic"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2" width="11" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 5v5M5.8 7.9 8 10.1l2.2-2.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="row-t"><b id="install-row-t">Install Note Cards</b><small>Open it from your Dock or Home Screen</small></span></button>
+      </div>
+    </section>
+    <section class="sheet-sec" aria-labelledby="backup-title">
+      <h3 class="sheet-sub" id="backup-title">Backup</h3>
+      <div class="list">
+        <button class="row" type="button" id="backup" data-backup><span class="row-ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 10V2.5M5 5.2 8 2.3l3 2.9M3 9.5v3.2h10V9.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="row-t"><b>Back up ratings</b><small>Save a file you can import later</small></span></button>
+        <button class="row" type="button" id="import" data-import><span class="row-ic"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5V10M5 7.3 8 10.2l3-2.9M3 9.5v3.2h10V9.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="row-t"><b>Import ratings</b><small>Merge a backup file into this device</small></span></button>
+      </div>
+    </section>
+    <section class="sheet-sec" aria-labelledby="how-title">
+      <h3 class="sheet-sub" id="how-title">How it works</h3>
+      <ol class="steps">
+        <li><span><b>Pick your cards.</b> Turn decks on and open one to choose keys, qualities and voicings.</span></li>
+        <li><span><b>Play what comes up.</b> Tap the card to flip it and check the notes, shapes and sound.</span></li>
+        <li><span><b>Rate it</b> Nailed, Solid or Rusty. Ratings collect on the home screen so you can aim practice at what still needs work.</span></li>
+      </ol>
+    </section>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="install-sheet" aria-labelledby="install-sheet-title">
+  <div class="sheet-in">
+    <span class="grab" aria-hidden="true"></span>
+    <div class="sheet-head"><h2 class="sheet-title" id="install-sheet-title">Add to Dock</h2><button class="icon-btn" type="button" data-close aria-label="Close"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5l9 9m0-9-9 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
+    <ol class="steps" id="install-steps"></ol>
+    <p class="sheet-text" id="install-note"></p>
+    <button class="btn btn-secondary" type="button" data-close>Done</button>
   </div>
 </dialog>
 
@@ -845,14 +908,15 @@ const state = load();
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' })[ch]);
 
-// ---------- progress store (this device only) ----------
-// Ratings live in this app's storage on this device. Nothing is uploaded.
+// ---------- progress store ----------
+// Ratings are saved on this device first. With sync on, they are also merged into one shared
+// copy (see the sync section) that every device using the same sync code reads and writes.
 const PROGRESS_KEY = 'shed-deck:progress:v1';
 const SAVED = new Map();    // card key -> { s, t }
-const PENDING = new Map();  // ratings not yet written (written right away here)
-const sync = { state: 'on' };
+const PENDING = new Map();  // ratings not yet written to this device
 const entryOf = key => PENDING.get(key) || SAVED.get(key) || null;
 const statusOf = key => { const e = entryOf(key); return e ? e.s : 'new'; };
+let saveFailed = false;
 
 function loadProgress() {
   try {
@@ -863,30 +927,165 @@ function loadProgress() {
   } catch (e) {}
 }
 function saveProgress() {
-  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(Object.fromEntries(SAVED))); return true; }
-  catch (e) { setSync('error'); return false; }
+  let ok = true;
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(Object.fromEntries(SAVED))); }
+  catch (e) { ok = false; }
+  if (ok === saveFailed) { saveFailed = !ok; renderSaveNote(); }
+  return ok;
+}
+function renderSaveNote() {
+  $('savenote').hidden = !saveFailed;
+  $('savenote').textContent = "Ratings couldn't be saved. This device's storage may be full.";
 }
 function initStore() {
   loadProgress();
-  setSync('on');
   progressChanged();
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch (e) {}
-}
-function setSync(st) {
-  sync.state = st;
-  const msg = {
-    on: 'Saved on this device only. Nothing is uploaded.',
-    error: "Ratings couldn't be saved. This device's storage may be full.",
-  }[st] || '';
-  const el = $('sync');
-  if (el) { el.textContent = msg; el.dataset.state = st === 'on' ? 'on' : 'error'; }
-  const note = $('savenote');
-  note.hidden = st === 'on';
-  note.textContent = msg;
+  initSync();
 }
 function persist(c, entry) {
   SAVED.set(c.key, entry);
   if (saveProgress()) PENDING.delete(c.key);
+  markDirty([c.key]);
+}
+
+// ---------- sync ----------
+// Ratings sync through a small Supabase database (run supabase-setup.sql there once). Devices
+// that share a sync code share ratings; the newest rating for each card wins. The publishable
+// key below is meant to be public: the database only lets it call the sync function.
+const SYNC_URL = '';  // Supabase Project URL, like https://abcdefgh.supabase.co
+const SYNC_KEY = '';  // Supabase publishable (anon) key
+const SYNC_CODE_KEY = 'shed-deck:sync-code', SYNC_DIRTY_KEY = 'shed-deck:sync-dirty', SYNC_LAST_KEY = 'shed-deck:sync-last';
+const CODE_ABC = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';  // no 0/O, 1/I/L
+const sync = { state: 'local', code: '', last: 0, busy: false, again: false, timer: null };
+const DIRTY = new Set();    // ratings this device hasn't sent yet
+const syncReady = () => !!(SYNC_URL && SYNC_KEY);
+const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} };
+// Codes are 19 random characters plus a check character, so a typo is caught before linking.
+const codeCheck = s => CODE_ABC[[...s].reduce((a, ch, i) => (a + (CODE_ABC.indexOf(ch) + 1) * (i + 1)) % CODE_ABC.length, 0)];
+const cleanCode = s => String(s || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+const validCode = c => c.length === 20 && [...c].every(ch => CODE_ABC.includes(ch)) && codeCheck(c.slice(0, 19)) === c[19];
+const prettyCode = c => c.match(/.{1,4}/g).join('-');
+function newCode() {
+  const a = new Uint32Array(19);
+  crypto.getRandomValues(a);
+  const body = Array.from(a, n => CODE_ABC[n % CODE_ABC.length]).join('');
+  return body + codeCheck(body);
+}
+function saveDirty() { lsSet(SYNC_DIRTY_KEY, DIRTY.size ? JSON.stringify([...DIRTY]) : null); }
+function markDirty(keys) {
+  if (!sync.code) return;
+  keys.forEach(k => DIRTY.add(k));
+  saveDirty();
+  scheduleSync(1500);
+}
+function scheduleSync(ms) { clearTimeout(sync.timer); sync.timer = setTimeout(syncNow, ms); }
+function syncHeaders() {
+  const h = { 'Content-Type': 'application/json', apikey: SYNC_KEY };
+  if (SYNC_KEY.startsWith('eyJ')) h.Authorization = 'Bearer ' + SYNC_KEY;  // older anon keys are JWTs
+  return h;
+}
+// Send this device's unsent ratings, get back the merged set, keep whatever is newer.
+async function syncNow() {
+  clearTimeout(sync.timer);
+  if (!syncReady() || !sync.code) return;
+  if (sync.busy) { sync.again = true; return; }
+  sync.busy = true;
+  setSyncState('syncing');
+  const sent = new Map();
+  DIRTY.forEach(k => { const e = SAVED.get(k); if (e) sent.set(k, e); else DIRTY.delete(k); });
+  const body = JSON.stringify({ p_code: sync.code, p_progress: Object.fromEntries(sent) });
+  try {
+    const res = await fetch(SYNC_URL.replace(/\/+$/, '') + '/rest/v1/rpc/note_cards_sync',
+      { method: 'POST', headers: syncHeaders(), body, keepalive: body.length < 60000, cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const merged = await res.json();
+    sent.forEach((e, k) => { if (SAVED.get(k) === e) DIRTY.delete(k); });  // re-rated meanwhile? keep it queued
+    saveDirty();
+    let changed = false;
+    if (merged && typeof merged === 'object') {
+      for (const k in merged) {
+        const e = merged[k];
+        if (!BY_KEY[k] || !e || !STATUS[e.s]) continue;
+        const t = Number(e.t) || 0, have = SAVED.get(k);
+        if (!have || t > have.t) { SAVED.set(k, { s: e.s, t }); changed = true; }
+      }
+    }
+    if (changed) { saveProgress(); progressChanged(); }
+    sync.last = Date.now();
+    lsSet(SYNC_LAST_KEY, String(sync.last));
+    setSyncState('on');
+  } catch (e) {
+    setSyncState(navigator.onLine === false ? 'offline' : 'error');
+    scheduleSync(30000);
+  } finally {
+    sync.busy = false;
+    if (sync.again) { sync.again = false; syncNow(); }
+  }
+}
+function linkCode(code, isNew) {
+  sync.code = code;
+  lsSet(SYNC_CODE_KEY, code);
+  DIRTY.clear();
+  SAVED.forEach((e, k) => DIRTY.add(k));  // first sync sends everything this device has
+  saveDirty();
+  renderSyncUI();
+  syncNow().then(() => { if (sync.state === 'on') toast(isNew ? 'Sync is on.' : 'This device is linked.'); });
+}
+function unlinkCode() {
+  sync.code = '';
+  clearTimeout(sync.timer);
+  DIRTY.clear();
+  [SYNC_CODE_KEY, SYNC_DIRTY_KEY, SYNC_LAST_KEY].forEach(k => lsSet(k, null));
+  sync.last = 0;
+  setSyncState('local');
+}
+function initSync() {
+  const c = cleanCode(lsGet(SYNC_CODE_KEY));
+  sync.code = syncReady() && validCode(c) ? c : '';
+  sync.last = Number(lsGet(SYNC_LAST_KEY)) || 0;
+  try { JSON.parse(lsGet(SYNC_DIRTY_KEY) || '[]').forEach(k => { if (BY_KEY[k]) DIRTY.add(k); }); } catch (e) {}
+  setSyncState(sync.code ? 'on' : 'local');
+  if (!checkSyncLink() && sync.code) syncNow();
+  window.addEventListener('hashchange', checkSyncLink);
+}
+// A shared link (…#sync=CODE) links the browser it's opened in.
+function checkSyncLink() {
+  const m = location.hash.match(/sync=([0-9A-Za-z-]+)/);
+  if (!m) return false;
+  history.replaceState(null, '', location.pathname + location.search);
+  const code = cleanCode(m[1]);
+  if (!syncReady() || !validCode(code) || code === sync.code) return false;
+  if (sync.code && !confirm('Switch this device to the sync code ' + prettyCode(code) + '?')) return false;
+  linkCode(code, false);
+  return true;
+}
+function syncAgo(t) {
+  const s = (Date.now() - t) / 1000;
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + ' min ago';
+  if (s < 86400) return Math.floor(s / 3600) + ' hr ago';
+  return new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+function syncMessage() {
+  if (!sync.code) return syncReady() ? 'Ratings are saved on this device only.' : "Ratings are saved on this device only. Sync isn't set up on this copy of the app yet.";
+  return {
+    syncing: 'Syncing…',
+    on: sync.last ? 'Synced ' + syncAgo(sync.last) + '.' : 'Sync is on.',
+    offline: "Offline. Ratings will sync when you're back online.",
+    error: "Couldn't reach the sync server. Trying again shortly.",
+  }[sync.state] || '';
+}
+function setSyncState(st) {
+  sync.state = st;
+  const msg = syncMessage(), el = $('sync');
+  if (el) { el.textContent = msg; el.dataset.state = sync.code ? st : 'local'; }
+  const foot = $('foot');
+  if (foot) {
+    foot.dataset.state = sync.code ? st : 'local';
+    foot.textContent = sync.code ? msg : 'Ratings are saved on this device. Sync them in the ⋯ menu.';
+  }
 }
 
 let toastTimer = null;
@@ -930,14 +1129,18 @@ function importRatings(file) {
     const src = data && typeof data.progress === 'object' ? data.progress : data;
     if (!src || typeof src !== 'object') { toast('No ratings found in that file.'); return; }
     let added = 0, updated = 0;
+    const changed = [];
     for (const k in src) {
       const e = src[k];
       if (!BY_KEY[k] || !e || !STATUS[e.s]) continue;
       const entry = { s: e.s, t: Number(e.t) || 0 }, have = SAVED.get(k);
       if (!have) { SAVED.set(k, entry); added++; }
       else if (entry.t > have.t) { SAVED.set(k, entry); updated++; }
+      else continue;
+      changed.push(k);
     }
     saveProgress();
+    markDirty(changed);
     progressChanged();
     toast(added || updated ? 'Imported ' + (added + updated) + (added + updated === 1 ? ' rating.' : ' ratings.') : 'Those ratings are already here.');
   };
@@ -998,7 +1201,7 @@ function renderLibrary() {
       </div>
     </section>`;
   }).join('');
-  setSync(sync.state);
+  setSyncState(sync.state);
   updateCounts();
 }
 const blank = () => ({ new: 0, rusty: 0, solid: 0, nailed: 0 });
@@ -1110,10 +1313,155 @@ document.querySelectorAll('dialog.sheet').forEach(d => {
   d.addEventListener('click', e => { if (e.target === d || e.target.closest('[data-close]')) closeSheet(d); });
   d.addEventListener('close', () => { if (timerAnim && !revealed && view === 'practice') timerAnim.play(); });
 });
-$('menu-btn').addEventListener('click', () => openSheet('menu'));
+$('menu-btn').addEventListener('click', () => { renderSyncUI(); renderInstall(); setSyncState(sync.state); openSheet('menu'); });
 $('timer-btn').addEventListener('click', () => openSheet('timer-sheet'));
 $('backup').addEventListener('click', () => { closeSheet($('menu')); backupRatings(); });
 $('import').addEventListener('click', () => { closeSheet($('menu')); $('importInput').click(); });
+
+// ---------- sync controls (in the ⋯ menu) ----------
+const ICON_CLOUD = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.6 12.5h7a2.9 2.9 0 0 0 .5-5.7 4 4 0 0 0-7.7-.7 3.2 3.2 0 0 0 .2 6.4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+const ICON_SYNC = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 6.5A5 5 0 0 0 3.7 5M3 9.5A5 5 0 0 0 12.3 11M3.5 2.3v2.9h2.9M12.5 13.7v-2.9H9.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ICON_OFF = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.1 4.1l7.8 7.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+function renderSyncUI() {
+  const ui = $('sync-ui');
+  if (!syncReady()) { ui.innerHTML = ''; ui.hidden = true; return; }
+  ui.hidden = false;
+  ui.innerHTML = !sync.code ? `
+    <div class="list"><button class="row" type="button" data-sync="start"><span class="row-ic">${ICON_CLOUD}</span><span class="row-t"><b>Turn on sync</b><small>Get a sync code for your devices</small></span></button></div>
+    <form class="code-form" id="code-form" novalidate>
+      <label class="field-label" for="code-in">Have a code from another device?</label>
+      <div class="code-row"><input class="field" id="code-in" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" maxlength="32" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX"><button class="btn btn-primary btn-sm" type="submit">Link</button></div>
+      <p class="field-err" id="code-err" hidden></p>
+    </form>` : `
+    <div class="code-card"><small>Your sync code</small><span class="code" id="code-out">${prettyCode(sync.code)}</span>
+      <span class="code-actions"><button class="ghost small" type="button" data-sync="copy">Copy code</button><button class="ghost small" type="button" data-sync="share">Share link</button></span></div>
+    <p class="sheet-text">On your other devices, open Note Cards, tap ⋯ and enter this code.</p>
+    <div class="list">
+      <button class="row" type="button" data-sync="now"><span class="row-ic">${ICON_SYNC}</span><span class="row-t"><b>Sync now</b><small>It also syncs on its own as you practice</small></span></button>
+      <button class="row warn" type="button" data-sync="off"><span class="row-ic muted">${ICON_OFF}</span><span class="row-t"><b>Turn off sync on this device</b><small>Your ratings stay on this device</small></span></button>
+    </div>`;
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+  try {
+    const t = document.createElement('textarea');
+    t.value = text; t.setAttribute('readonly', ''); t.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    (document.querySelector('dialog[open]') || document.body).appendChild(t);
+    t.select();
+    const ok = document.execCommand('copy');
+    t.remove();
+    return ok;
+  } catch (e) { return false; }
+}
+async function shareLink() {
+  const url = location.origin + location.pathname + '#sync=' + sync.code;
+  try {
+    if (navigator.share) { await navigator.share({ title: 'Note Cards sync', url }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  toast(await copyText(url) ? 'Link copied.' : "Couldn't copy the link.");
+}
+$('sync-ui').addEventListener('click', e => {
+  const b = e.target.closest('[data-sync]');
+  if (!b) return;
+  const act = b.dataset.sync;
+  if (act === 'start') linkCode(newCode(), true);
+  else if (act === 'copy') copyText(prettyCode(sync.code)).then(ok => toast(ok ? 'Sync code copied.' : 'Press and hold the code to copy it.'));
+  else if (act === 'share') shareLink();
+  else if (act === 'now') syncNow().then(() => { if (sync.state === 'on') toast('Synced.'); });
+  else if (act === 'off' && confirm('Turn off sync on this device? Your ratings stay here. To link again later, enter your sync code: ' + prettyCode(sync.code))) {
+    unlinkCode(); renderSyncUI(); toast('Sync is off on this device.');
+  }
+});
+$('sync-ui').addEventListener('submit', e => {
+  e.preventDefault();
+  const code = cleanCode($('code-in').value), err = $('code-err');
+  if (!validCode(code)) {
+    err.hidden = false;
+    err.textContent = code.length === 20 ? "That code doesn't look right. Check it for typos." : 'A sync code has 20 letters and numbers.';
+    $('code-in').focus();
+    return;
+  }
+  linkCode(code, false);
+});
+$('sync-ui').addEventListener('input', e => { if (e.target.id === 'code-in') $('code-err').hidden = true; });
+document.addEventListener('visibilitychange', () => {
+  if (!sync.code) return;
+  if (document.visibilityState === 'visible') { if (Date.now() - sync.last > 5000) syncNow(); }
+  else if (DIRTY.size) syncNow();  // leaving the app: send what's queued
+});
+window.addEventListener('online', () => { if (sync.code) syncNow(); });
+window.addEventListener('offline', () => { if (sync.code && !sync.busy) setSyncState('offline'); });
+// While open, pick up ratings from other devices every minute and keep "Synced 3 min ago" current.
+setInterval(() => {
+  if (!sync.code) return;
+  if (document.visibilityState === 'visible' && Date.now() - sync.last > 55000) syncNow();
+  else if (sync.state === 'on') setSyncState('on');
+}, 30000);
+
+// ---------- install (Add to Dock / Home Screen) ----------
+let installEvt = null;  // Chrome and Edge hand over their install prompt here
+const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+function installPlatform() {
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
+  if (/Android/.test(ua)) return 'android';
+  const safari = /Safari\//.test(ua) && !/Chrome\/|Chromium\/|Edg\/|OPR\/|Firefox\//.test(ua);
+  if (/Macintosh/.test(ua) && safari) return 'mac-safari';
+  if (/Firefox\//.test(ua)) return 'firefox';
+  if (/Chrome\/|Edg\//.test(ua)) return 'chrome';
+  return 'other';
+}
+const INSTALL = {
+  'mac-safari': { title: 'Add to Dock', sub: 'Open Note Cards from your Dock', steps: [
+      '<b>In the menu bar, choose File → Add to Dock…</b> Or click the Share button in Safari’s toolbar and choose Add to Dock.',
+      '<b>Click Add.</b> Note Cards opens in its own window from the Dock, Launchpad and Spotlight.'],
+    note: 'Needs macOS Sonoma or later. The Dock app keeps its ratings separate from Safari, so turn on sync to bring them along.' },
+  ios: { title: 'Add to Home Screen', sub: 'Open Note Cards from your Home Screen', steps: [
+      '<b>Tap the Share button</b> (the square with an arrow).',
+      '<b>Scroll down and tap Add to Home Screen.</b>',
+      '<b>Tap Add.</b> Note Cards opens full screen and works offline.'],
+    note: 'The Home Screen app keeps its ratings separate from Safari, so turn on sync to bring them along.' },
+  android: { title: 'Install Note Cards', sub: 'Open Note Cards from your Home screen', steps: [
+      '<b>Open the browser menu</b> (⋮).',
+      '<b>Tap Install app</b> or Add to Home screen.'], note: '' },
+  chrome: { title: 'Install Note Cards', sub: 'Open Note Cards in its own window', steps: [
+      '<b>Click the install icon</b> at the right end of the address bar. Or open the ⋮ menu and choose Cast, save and share → Install page as app…',
+      '<b>Click Install.</b> Note Cards opens in its own window and shows up with your other apps.'], note: '' },
+  firefox: { title: 'Install Note Cards', sub: '', steps: [
+      '<b>Open this page in Safari or Chrome.</b> Firefox can’t install web apps on a computer.',
+      '<b>Follow the steps there</b> to add Note Cards to your Dock.'], note: '' },
+  other: { title: 'Install Note Cards', sub: '', steps: [
+      '<b>Open your browser’s menu</b> and look for Install, Add to Dock or Add to Home Screen.'], note: '' },
+};
+function renderInstall() {
+  const p = installPlatform(), info = INSTALL[p], standalone = isStandalone();
+  $('install-sec').hidden = standalone;
+  $('install-row-t').textContent = installEvt ? 'Install Note Cards' : info.title;
+  $('install-banner').hidden = standalone || lsGet('shed-deck:install-dismissed') === '1' || !(installEvt || p === 'ios' || p === 'mac-safari');
+  $('install-banner-sub').textContent = info.sub || 'Open Note Cards like any other app';
+  $('install-go').textContent = installEvt ? 'Install' : 'How';
+}
+function startInstall() {
+  if (installEvt) {
+    const ev = installEvt;
+    ev.prompt();
+    ev.userChoice.finally(() => { installEvt = null; renderInstall(); });
+    return;
+  }
+  const info = INSTALL[installPlatform()];
+  $('install-sheet-title').textContent = info.title;
+  $('install-steps').innerHTML = info.steps.map(t => `<li><span>${t}</span></li>`).join('');
+  $('install-note').textContent = info.note;
+  $('install-note').hidden = !info.note;
+  closeSheet($('menu'));
+  openSheet('install-sheet');
+}
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; renderInstall(); });
+window.addEventListener('appinstalled', () => { installEvt = null; renderInstall(); });
+$('install-row').addEventListener('click', startInstall);
+$('install-go').addEventListener('click', startInstall);
+$('install-x').addEventListener('click', () => { lsSet('shed-deck:install-dismissed', '1'); renderInstall(); });
+$('foot').addEventListener('click', () => $('menu-btn').click());
 const onScroll = () => document.querySelectorAll('.appbar').forEach(b => b.classList.toggle('scrolled', window.scrollY > 4));
 window.addEventListener('scroll', onScroll, { passive: true });
 
@@ -1507,6 +1855,7 @@ document.addEventListener('keyup', e => { if (view === 'practice' && e.key === '
 
 function boot(data) {
   renderLibrary();
+  renderInstall();
   renderTimerSeg();
   const s = data && data.session;
   if (data && data.view === 'practice' && s && Array.isArray(s.order)) {
