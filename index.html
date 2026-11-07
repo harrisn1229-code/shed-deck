@@ -287,21 +287,23 @@ button{font:inherit;color:inherit;-webkit-user-select:none;user-select:none;touc
 .sync[data-state="local"]::before{background:var(--muted);opacity:.5}
 .sync[data-state="syncing"]::before{background:var(--accent);animation:pulse .8s ease-in-out infinite alternate}
 @keyframes pulse{to{opacity:.25}}
-.code-card{display:grid;gap:.3rem;justify-items:center;text-align:center;padding:1rem .75rem;border-radius:var(--r-md);background:var(--accent-soft)}
-.code-card small{font-size:var(--t-label);font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-text)}
-.code{font-size:clamp(1.0625rem, .9rem + 1.2vw, 1.375rem);font-weight:800;letter-spacing:.06em;color:var(--text);-webkit-user-select:all;user-select:all;overflow-wrap:anywhere}
-.code-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem;margin-top:.35rem}
-.code-actions .ghost{background:var(--surface)}
 .code-form{display:grid;gap:.45rem}
 .field-label{font-size:.875rem;font-weight:600;color:var(--muted)}
 .code-row{display:flex;gap:.5rem}
 .field{flex:1;min-width:0;height:3rem;border:0;border-radius:var(--r-sm);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);padding:0 .9rem;
-  font:inherit;font-size:1rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text)}
+  font:inherit;font-size:1rem;font-weight:600;color:var(--text)}
 .field::placeholder{color:var(--muted);opacity:.55;font-weight:600}
 .field:focus{outline:none;box-shadow:inset 0 0 0 2px var(--accent)}
 .field-err{margin:0;font-size:.8125rem;font-weight:600;color:var(--st-rusty)}
 .btn-sm{min-height:2.5rem;padding:.5rem 1rem;font-size:.9375rem;border-radius:var(--r-sm)}
 .code-row .btn-sm{min-height:3rem}
+.row.static{cursor:default}
+.row.static:active{background:none}
+.sheet-text.small{font-size:.8125rem}
+.sheet-text a,.token-help a{color:var(--accent-text);font-weight:700}
+.token-help{border-radius:var(--r-md);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);padding:.75rem 1rem}
+.token-help summary{cursor:pointer;font-weight:700;color:var(--accent-text)}
+.token-help[open] summary{margin-bottom:.75rem}
 .row-ic.muted{background:var(--surface-3);color:var(--text)}
 .row.warn b{color:var(--st-rusty)}
 .foot{display:flex;justify-content:center;width:100%;border:0;background:none;cursor:pointer;margin:1.5rem 0 0;padding:.5rem;font-size:.8125rem;text-align:center;border-radius:var(--r-sm)}
@@ -909,8 +911,8 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' })[ch]);
 
 // ---------- progress store ----------
-// Ratings are saved on this device first. With sync on, they are also merged into one shared
-// copy (see the sync section) that every device using the same sync code reads and writes.
+// Ratings are saved on this device first. With sync on, they are also merged into a secret gist
+// on your GitHub account that every connected device reads and writes (see the sync section).
 const PROGRESS_KEY = 'shed-deck:progress:v1';
 const SAVED = new Map();    // card key -> { s, t }
 const PENDING = new Map();  // ratings not yet written to this device
@@ -946,120 +948,123 @@ function initStore() {
 function persist(c, entry) {
   SAVED.set(c.key, entry);
   if (saveProgress()) PENDING.delete(c.key);
-  markDirty([c.key]);
+  queueSync();
 }
 
 // ---------- sync ----------
-// Ratings sync through a small Supabase database (run supabase-setup.sql there once). Devices
-// that share a sync code share ratings; the newest rating for each card wins. The publishable
-// key below is meant to be public: the database only lets it call the sync function.
-const SYNC_URL = '';  // Supabase Project URL, like https://abcdefgh.supabase.co
-const SYNC_KEY = '';  // Supabase publishable (anon) key
-const SYNC_CODE_KEY = 'shed-deck:sync-code', SYNC_DIRTY_KEY = 'shed-deck:sync-dirty', SYNC_LAST_KEY = 'shed-deck:sync-last';
-const CODE_ABC = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';  // no 0/O, 1/I/L
-const sync = { state: 'local', code: '', last: 0, busy: false, again: false, timer: null };
-const DIRTY = new Set();    // ratings this device hasn't sent yet
-const syncReady = () => !!(SYNC_URL && SYNC_KEY);
+// The same setup as Barline: every device connected to the same GitHub account shares one secret
+// gist ("Note Cards sync", file note-cards.json) holding all ratings. The newest rating for each
+// card wins. The GitHub token (gist access only) stays on the device; deck choices stay per device.
+const GH_KEY = 'shed-deck:ghToken', GH_USER = 'shed-deck:ghUser', GIST_KEY = 'shed-deck:gistId', SYNC_AT = 'shed-deck:syncedAt';
+const GIST_FILE = 'note-cards.json', GIST_DESC = 'Note Cards sync';
+const TOKEN_URL = 'https://github.com/settings/tokens/new?scopes=gist&description=Note%20Cards%20sync';
 const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 const lsSet = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} };
-// Codes are 19 random characters plus a check character, so a typo is caught before linking.
-const codeCheck = s => CODE_ABC[[...s].reduce((a, ch, i) => (a + (CODE_ABC.indexOf(ch) + 1) * (i + 1)) % CODE_ABC.length, 0)];
-const cleanCode = s => String(s || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
-const validCode = c => c.length === 20 && [...c].every(ch => CODE_ABC.includes(ch)) && codeCheck(c.slice(0, 19)) === c[19];
-const prettyCode = c => c.match(/.{1,4}/g).join('-');
-function newCode() {
-  const a = new Uint32Array(19);
-  crypto.getRandomValues(a);
-  const body = Array.from(a, n => CODE_ABC[n % CODE_ABC.length]).join('');
-  return body + codeCheck(body);
+const ghToken = () => lsGet(GH_KEY) || '';
+const sync = { state: '', msg: '', busy: false, again: false, timer: null };
+
+class SyncError extends Error { constructor(msg, kind) { super(msg); this.kind = kind || ''; } }
+async function gh(path, opts = {}) {
+  const headers = { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + (opts.token || ghToken()) };
+  if (opts.body) headers['Content-Type'] = 'application/json';
+  let res;
+  try {
+    res = await fetch('https://api.github.com' + path, { method: opts.method || 'GET', headers, body: opts.body ? JSON.stringify(opts.body) : undefined, cache: 'no-store' });
+  } catch (e) { throw new SyncError("You're offline. Ratings will sync when you're back online.", 'offline'); }
+  if (res.status === 401) throw new SyncError("GitHub didn't accept the sync token. Connect again in the ⋯ menu.", 'auth');
+  if (res.status === 404) throw new SyncError('Not found on GitHub.', 'notfound');
+  if (res.status === 403 || res.status === 429) {
+    const left = res.headers.get('x-ratelimit-remaining');
+    throw left === '0' ? new SyncError('GitHub is limiting requests for a while. Sync will try again later.', 'rate')
+      : new SyncError("This token can't use gists. Make one with the gist box ticked.", 'auth');
+  }
+  if (!res.ok) throw new SyncError('GitHub had a problem (' + res.status + '). Sync will try again later.', 'server');
+  return res.status === 204 ? null : res.json();
 }
-function saveDirty() { lsSet(SYNC_DIRTY_KEY, DIRTY.size ? JSON.stringify([...DIRTY]) : null); }
-function markDirty(keys) {
-  if (!sync.code) return;
-  keys.forEach(k => DIRTY.add(k));
-  saveDirty();
-  scheduleSync(1500);
+async function findGist() {
+  for (let page = 1; page <= 10; page++) {
+    const list = await gh('/gists?per_page=100&page=' + page);
+    const g = (list || []).find(x => x && x.description === GIST_DESC && x.files && x.files[GIST_FILE]);
+    if (g) return g.id;
+    if (!list || list.length < 100) break;
+  }
+  return null;
 }
-function scheduleSync(ms) { clearTimeout(sync.timer); sync.timer = setTimeout(syncNow, ms); }
-function syncHeaders() {
-  const h = { 'Content-Type': 'application/json', apikey: SYNC_KEY };
-  if (SYNC_KEY.startsWith('eyJ')) h.Authorization = 'Bearer ' + SYNC_KEY;  // older anon keys are JWTs
-  return h;
+async function readGist(id) {
+  const g = await gh('/gists/' + id);
+  const f = g && g.files && g.files[GIST_FILE];
+  if (!f) return null;
+  let text = f.content;
+  if (f.truncated && f.raw_url) {
+    try { text = await (await fetch(f.raw_url, { cache: 'no-store' })).text(); }
+    catch (e) { throw new SyncError("You're offline. Ratings will sync when you're back online.", 'offline'); }
+  }
+  try { return JSON.parse(text); } catch (e) { return null; }
 }
-// Send this device's unsent ratings, get back the merged set, keep whatever is newer.
+const payload = () => JSON.stringify({ app: 'note-cards', version: 1, savedAt: Date.now(), progress: Object.fromEntries(SAVED) });
+// Take any newer ratings from the gist, and report whether the gist is missing any of ours.
+function mergeRemote(remote) {
+  const rp = remote && remote.progress && typeof remote.progress === 'object' ? remote.progress : {};
+  let localChanged = false, remoteStale = !remote;
+  for (const k in rp) {
+    const e = rp[k];
+    if (!BY_KEY[k] || !e || !STATUS[e.s]) continue;
+    const t = Number(e.t) || 0, have = SAVED.get(k);
+    if (!have || t > have.t) { SAVED.set(k, { s: e.s, t }); localChanged = true; }
+  }
+  SAVED.forEach((e, k) => { const r = rp[k]; if (!r || r.s !== e.s || (Number(r.t) || 0) !== e.t) remoteStale = true; });
+  if (localChanged) { saveProgress(); progressChanged(); }
+  return { remoteStale };
+}
 async function syncNow() {
-  clearTimeout(sync.timer);
-  if (!syncReady() || !sync.code) return;
+  if (!ghToken()) return;
   if (sync.busy) { sync.again = true; return; }
+  clearTimeout(sync.timer);
   sync.busy = true;
   setSyncState('syncing');
-  const sent = new Map();
-  DIRTY.forEach(k => { const e = SAVED.get(k); if (e) sent.set(k, e); else DIRTY.delete(k); });
-  const body = JSON.stringify({ p_code: sync.code, p_progress: Object.fromEntries(sent) });
   try {
-    const res = await fetch(SYNC_URL.replace(/\/+$/, '') + '/rest/v1/rpc/note_cards_sync',
-      { method: 'POST', headers: syncHeaders(), body, keepalive: body.length < 60000, cache: 'no-store' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const merged = await res.json();
-    sent.forEach((e, k) => { if (SAVED.get(k) === e) DIRTY.delete(k); });  // re-rated meanwhile? keep it queued
-    saveDirty();
-    let changed = false;
-    if (merged && typeof merged === 'object') {
-      for (const k in merged) {
-        const e = merged[k];
-        if (!BY_KEY[k] || !e || !STATUS[e.s]) continue;
-        const t = Number(e.t) || 0, have = SAVED.get(k);
-        if (!have || t > have.t) { SAVED.set(k, { s: e.s, t }); changed = true; }
-      }
+    let id = lsGet(GIST_KEY) || '', remote = null;
+    if (id) {
+      try { remote = await readGist(id); }
+      catch (e) { if (e.kind !== 'notfound') throw e; id = ''; }
     }
-    if (changed) { saveProgress(); progressChanged(); }
-    sync.last = Date.now();
-    lsSet(SYNC_LAST_KEY, String(sync.last));
-    setSyncState('on');
+    if (!id) {
+      id = await findGist();
+      if (id) remote = await readGist(id);
+    }
+    const r = mergeRemote(remote);
+    if (!id) {
+      const g = await gh('/gists', { method: 'POST', body: { description: GIST_DESC, public: false, files: { [GIST_FILE]: { content: payload() } } } });
+      id = g.id;
+    } else if (r.remoteStale) {
+      await gh('/gists/' + id, { method: 'PATCH', body: { files: { [GIST_FILE]: { content: payload() } } } });
+    }
+    lsSet(GIST_KEY, id);
+    lsSet(SYNC_AT, String(Date.now()));
+    setSyncState('ok');
   } catch (e) {
-    setSyncState(navigator.onLine === false ? 'offline' : 'error');
-    scheduleSync(30000);
+    const err = e instanceof SyncError ? e : new SyncError("Sync didn't finish. It will try again.", '');
+    setSyncState(err.kind === 'offline' ? 'offline' : 'error', err.message);
+    if (err.kind === 'auth') toast(err.message);
+    else queueSync(err.kind === 'rate' ? 600000 : 30000);
   } finally {
     sync.busy = false;
-    if (sync.again) { sync.again = false; syncNow(); }
+    if (sync.again) { sync.again = false; queueSync(800); }
   }
 }
-function linkCode(code, isNew) {
-  sync.code = code;
-  lsSet(SYNC_CODE_KEY, code);
-  DIRTY.clear();
-  SAVED.forEach((e, k) => DIRTY.add(k));  // first sync sends everything this device has
-  saveDirty();
-  renderSyncUI();
-  syncNow().then(() => { if (sync.state === 'on') toast(isNew ? 'Sync is on.' : 'This device is linked.'); });
-}
-function unlinkCode() {
-  sync.code = '';
+function queueSync(ms) {
+  if (!ghToken()) return;
   clearTimeout(sync.timer);
-  DIRTY.clear();
-  [SYNC_CODE_KEY, SYNC_DIRTY_KEY, SYNC_LAST_KEY].forEach(k => lsSet(k, null));
-  sync.last = 0;
-  setSyncState('local');
+  sync.timer = setTimeout(syncNow, ms == null ? 2500 : ms);
+}
+function disconnectSync() {
+  [GH_KEY, GH_USER, GIST_KEY, SYNC_AT].forEach(k => lsSet(k, null));
+  clearTimeout(sync.timer);
+  setSyncState('');
 }
 function initSync() {
-  const c = cleanCode(lsGet(SYNC_CODE_KEY));
-  sync.code = syncReady() && validCode(c) ? c : '';
-  sync.last = Number(lsGet(SYNC_LAST_KEY)) || 0;
-  try { JSON.parse(lsGet(SYNC_DIRTY_KEY) || '[]').forEach(k => { if (BY_KEY[k]) DIRTY.add(k); }); } catch (e) {}
-  setSyncState(sync.code ? 'on' : 'local');
-  if (!checkSyncLink() && sync.code) syncNow();
-  window.addEventListener('hashchange', checkSyncLink);
-}
-// A shared link (…#sync=CODE) links the browser it's opened in.
-function checkSyncLink() {
-  const m = location.hash.match(/sync=([0-9A-Za-z-]+)/);
-  if (!m) return false;
-  history.replaceState(null, '', location.pathname + location.search);
-  const code = cleanCode(m[1]);
-  if (!syncReady() || !validCode(code) || code === sync.code) return false;
-  if (sync.code && !confirm('Switch this device to the sync code ' + prettyCode(code) + '?')) return false;
-  linkCode(code, false);
-  return true;
+  setSyncState(ghToken() ? 'ok' : '');
+  if (ghToken()) syncNow();
 }
 function syncAgo(t) {
   const s = (Date.now() - t) / 1000;
@@ -1069,23 +1074,21 @@ function syncAgo(t) {
   return new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 function syncMessage() {
-  if (!sync.code) return syncReady() ? 'Ratings are saved on this device only.' : "Ratings are saved on this device only. Sync isn't set up on this copy of the app yet.";
-  return {
-    syncing: 'Syncing…',
-    on: sync.last ? 'Synced ' + syncAgo(sync.last) + '.' : 'Sync is on.',
-    offline: "Offline. Ratings will sync when you're back online.",
-    error: "Couldn't reach the sync server. Trying again shortly.",
-  }[sync.state] || '';
+  if (!ghToken()) return 'Ratings are saved on this device only.';
+  if (sync.state === 'syncing') return 'Syncing…';
+  if (sync.state === 'offline') return "Offline. Ratings will sync when you're back online.";
+  if (sync.state === 'error') return 'Sync paused: ' + sync.msg;
+  const at = Number(lsGet(SYNC_AT)) || 0;
+  return at ? 'Synced ' + syncAgo(at) + '.' : 'Not synced yet.';
 }
-function setSyncState(st) {
+function setSyncState(st, msg) {
   sync.state = st;
-  const msg = syncMessage(), el = $('sync');
-  if (el) { el.textContent = msg; el.dataset.state = sync.code ? st : 'local'; }
+  sync.msg = msg || '';
+  const on = !!ghToken(), dot = !on ? 'local' : st === 'ok' ? 'on' : st, text = syncMessage();
+  const el = $('sync');
+  if (el) { el.textContent = text; el.dataset.state = dot; }
   const foot = $('foot');
-  if (foot) {
-    foot.dataset.state = sync.code ? st : 'local';
-    foot.textContent = sync.code ? msg : 'Ratings are saved on this device. Sync them in the ⋯ menu.';
-  }
+  if (foot) { foot.dataset.state = dot; foot.textContent = on ? text : 'Ratings are saved on this device. Sync them in the ⋯ menu.'; }
 }
 
 let toastTimer = null;
@@ -1140,7 +1143,7 @@ function importRatings(file) {
       changed.push(k);
     }
     saveProgress();
-    markDirty(changed);
+    if (changed.length) queueSync(800);
     progressChanged();
     toast(added || updated ? 'Imported ' + (added + updated) + (added + updated === 1 ? ' rating.' : ' ratings.') : 'Those ratings are already here.');
   };
@@ -1323,79 +1326,68 @@ const ICON_CLOUD = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.6 12
 const ICON_SYNC = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 6.5A5 5 0 0 0 3.7 5M3 9.5A5 5 0 0 0 12.3 11M3.5 2.3v2.9h2.9M12.5 13.7v-2.9H9.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const ICON_OFF = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.1 4.1l7.8 7.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 function renderSyncUI() {
-  const ui = $('sync-ui');
-  if (!syncReady()) { ui.innerHTML = ''; ui.hidden = true; return; }
-  ui.hidden = false;
-  ui.innerHTML = !sync.code ? `
-    <div class="list"><button class="row" type="button" data-sync="start"><span class="row-ic">${ICON_CLOUD}</span><span class="row-t"><b>Turn on sync</b><small>Get a sync code for your devices</small></span></button></div>
-    <form class="code-form" id="code-form" novalidate>
-      <label class="field-label" for="code-in">Have a code from another device?</label>
-      <div class="code-row"><input class="field" id="code-in" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" maxlength="32" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX"><button class="btn btn-primary btn-sm" type="submit">Link</button></div>
-      <p class="field-err" id="code-err" hidden></p>
-    </form>` : `
-    <div class="code-card"><small>Your sync code</small><span class="code" id="code-out">${prettyCode(sync.code)}</span>
-      <span class="code-actions"><button class="ghost small" type="button" data-sync="copy">Copy code</button><button class="ghost small" type="button" data-sync="share">Share link</button></span></div>
-    <p class="sheet-text">On your other devices, open Note Cards, tap ⋯ and enter this code.</p>
+  const who = lsGet(GH_USER) || '';
+  $('sync-ui').innerHTML = ghToken() ? `
     <div class="list">
+      <div class="row static"><span class="row-ic">${ICON_CLOUD}</span><span class="row-t"><b>On with GitHub${who ? ' (' + esc(who) + ')' : ''}</b><small>Ratings sync through a secret gist</small></span></div>
       <button class="row" type="button" data-sync="now"><span class="row-ic">${ICON_SYNC}</span><span class="row-t"><b>Sync now</b><small>It also syncs on its own as you practice</small></span></button>
-      <button class="row warn" type="button" data-sync="off"><span class="row-ic muted">${ICON_OFF}</span><span class="row-t"><b>Turn off sync on this device</b><small>Your ratings stay on this device</small></span></button>
-    </div>`;
+      <button class="row warn" type="button" data-sync="off"><span class="row-ic muted">${ICON_OFF}</span><span class="row-t"><b>Turn off sync on this device</b><small>Your ratings stay here and in the gist</small></span></button>
+    </div>` : `
+    <p class="sheet-text">Keep ratings the same on your phone and computer. Like Barline, they're kept in one secret gist on your GitHub account, and each device connects with a GitHub token.</p>
+    <form class="code-form" id="token-form" novalidate>
+      <label class="field-label" for="token-in">Paste a GitHub token with gist access. The one you use for Barline works.</label>
+      <div class="code-row"><input class="field" id="token-in" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="ghp_…"><button class="btn btn-primary btn-sm" type="submit" id="token-go">Connect</button></div>
+      <p class="field-err" id="token-err" hidden></p>
+    </form>
+    <details class="token-help">
+      <summary>Need a token?</summary>
+      <ol class="steps">
+        <li><span>Open <a href="${TOKEN_URL}" target="_blank" rel="noopener">GitHub's token page</a> and sign in.</span></li>
+        <li><span>Keep only <b>gist</b> ticked and pick an expiration ("No expiration" means you won't do this again). Tap <b>Generate token</b>.</span></li>
+        <li><span>Copy the token (it starts with ghp_) and paste it above. Use the same GitHub account on every device.</span></li>
+      </ol>
+    </details>
+    <p class="sheet-text small">The token can only read and write gists, and it stays on this device. A secret gist isn't listed on your profile or in search, but anyone with its link can open it.</p>`;
 }
-async function copyText(text) {
-  try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+async function connectToken() {
+  const v = $('token-in').value.trim(), err = $('token-err'), go = $('token-go');
+  const fail = msg => { err.hidden = false; err.textContent = msg; go.disabled = false; go.textContent = 'Connect'; $('token-in').focus(); };
+  if (!/^(ghp_|github_pat_|gho_)[A-Za-z0-9_]{20,}$/.test(v)) { fail("That doesn't look like a GitHub token. They start with ghp_ or github_pat_."); return; }
+  go.disabled = true; go.textContent = 'Connecting…'; err.hidden = true;
   try {
-    const t = document.createElement('textarea');
-    t.value = text; t.setAttribute('readonly', ''); t.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
-    (document.querySelector('dialog[open]') || document.body).appendChild(t);
-    t.select();
-    const ok = document.execCommand('copy');
-    t.remove();
-    return ok;
-  } catch (e) { return false; }
-}
-async function shareLink() {
-  const url = location.origin + location.pathname + '#sync=' + sync.code;
-  try {
-    if (navigator.share) { await navigator.share({ title: 'Note Cards sync', url }); return; }
-  } catch (e) { if (e && e.name === 'AbortError') return; }
-  toast(await copyText(url) ? 'Link copied.' : "Couldn't copy the link.");
+    const me = await gh('/user', { token: v });
+    lsSet(GH_KEY, v);
+    lsSet(GH_USER, me && me.login ? String(me.login) : '');
+    lsSet(GIST_KEY, null);
+    lsSet(SYNC_AT, null);
+    renderSyncUI();
+    await syncNow();
+    if (sync.state === 'ok') toast('Sync is on' + (me && me.login ? ' for ' + me.login : '') + '.');
+  } catch (e) {
+    if (!ghToken()) fail(e.kind === 'auth' ? "GitHub didn't accept that token. Check it and try again." : e instanceof SyncError ? e.message : "Couldn't connect to GitHub.");
+  }
 }
 $('sync-ui').addEventListener('click', e => {
   const b = e.target.closest('[data-sync]');
   if (!b) return;
-  const act = b.dataset.sync;
-  if (act === 'start') linkCode(newCode(), true);
-  else if (act === 'copy') copyText(prettyCode(sync.code)).then(ok => toast(ok ? 'Sync code copied.' : 'Press and hold the code to copy it.'));
-  else if (act === 'share') shareLink();
-  else if (act === 'now') syncNow().then(() => { if (sync.state === 'on') toast('Synced.'); });
-  else if (act === 'off' && confirm('Turn off sync on this device? Your ratings stay here. To link again later, enter your sync code: ' + prettyCode(sync.code))) {
-    unlinkCode(); renderSyncUI(); toast('Sync is off on this device.');
+  if (b.dataset.sync === 'now') syncNow().then(() => toast(sync.state === 'ok' ? 'Synced.' : (sync.msg || "Sync didn't finish.")));
+  else if (b.dataset.sync === 'off' && confirm('Turn off sync on this device? Your ratings stay here and in the gist.')) {
+    disconnectSync(); renderSyncUI(); toast('Sync is off on this device.');
   }
 });
-$('sync-ui').addEventListener('submit', e => {
-  e.preventDefault();
-  const code = cleanCode($('code-in').value), err = $('code-err');
-  if (!validCode(code)) {
-    err.hidden = false;
-    err.textContent = code.length === 20 ? "That code doesn't look right. Check it for typos." : 'A sync code has 20 letters and numbers.';
-    $('code-in').focus();
-    return;
-  }
-  linkCode(code, false);
-});
-$('sync-ui').addEventListener('input', e => { if (e.target.id === 'code-in') $('code-err').hidden = true; });
+$('sync-ui').addEventListener('submit', e => { e.preventDefault(); connectToken(); });
+$('sync-ui').addEventListener('input', e => { if (e.target.id === 'token-in') $('token-err').hidden = true; });
 document.addEventListener('visibilitychange', () => {
-  if (!sync.code) return;
-  if (document.visibilityState === 'visible') { if (Date.now() - sync.last > 5000) syncNow(); }
-  else if (DIRTY.size) syncNow();  // leaving the app: send what's queued
+  if (!ghToken()) return;
+  if (document.visibilityState === 'visible') { if (Date.now() - (Number(lsGet(SYNC_AT)) || 0) > 5000) syncNow(); }
+  else if (sync.timer) syncNow();  // leaving the app with a rating still queued: send it now
 });
-window.addEventListener('online', () => { if (sync.code) syncNow(); });
-window.addEventListener('offline', () => { if (sync.code && !sync.busy) setSyncState('offline'); });
-// While open, pick up ratings from other devices every minute and keep "Synced 3 min ago" current.
+window.addEventListener('online', () => { if (ghToken()) syncNow(); });
+// While open, pick up ratings from other devices every couple of minutes and keep "Synced 3 min ago" current.
 setInterval(() => {
-  if (!sync.code) return;
-  if (document.visibilityState === 'visible' && Date.now() - sync.last > 55000) syncNow();
-  else if (sync.state === 'on') setSyncState('on');
+  if (!ghToken()) return;
+  if (document.visibilityState === 'visible' && !sync.busy && Date.now() - (Number(lsGet(SYNC_AT)) || 0) > 115000 && sync.state === 'ok') syncNow();
+  else if (sync.state === 'ok') setSyncState('ok');
 }, 30000);
 
 // ---------- install (Add to Dock / Home Screen) ----------
