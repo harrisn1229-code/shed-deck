@@ -1,9 +1,9 @@
-/* Shed Deck service worker: the app opens from the cache with no connection,
+/* Note Cards service worker: the app opens from the cache with no connection,
    and a fresh copy is fetched in the background for next launch.
    Bump VERSION whenever any app file changes. Only caches named shed-deck-*
    are ever cleared, so other apps on the same site keep theirs. */
 const PREFIX = "shed-deck-";
-const VERSION = PREFIX + "v2.0.0";
+const VERSION = PREFIX + "v2.1.0";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", (event) => {

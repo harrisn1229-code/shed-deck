@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Shed Deck</title>
+<title>Note Cards</title>
 <meta name="description" content="Practice flashcards for modes, arpeggios, triads and 7th chords. Works offline; ratings stay on this device.">
 <meta name="theme-color" content="#F2F3F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E0F15" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Shed Deck">
+<meta name="apple-mobile-web-app-title" content="Note Cards">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest">
@@ -442,7 +442,7 @@ button{font:inherit;color:inherit;-webkit-user-select:none;user-select:none;touc
       <div class="appbar-in">
         <h1 class="brand"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="bmg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6D63FF"/><stop offset="1" stop-color="#3A33CF"/></linearGradient>
 <filter id="bms" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#14104F" flood-opacity=".35"/></filter></defs><rect width="512" height="512" rx="114" fill="url(#bmg)"/><g transform="rotate(-8 256 258)"><rect x="88.0" y="147.0" width="336" height="222" rx="24" fill="#fff" filter="url(#bms)"/>
-<g stroke="#D9DFEB" stroke-width="6" stroke-linecap="round"><line x1="122.0" x2="390.0" y1="206" y2="206"/><line x1="122.0" x2="390.0" y1="240" y2="240"/><line x1="122.0" x2="390.0" y1="274" y2="274"/><line x1="122.0" x2="390.0" y1="308" y2="308"/></g><ellipse cx="180.0" cy="308" rx="23" ry="17.5" transform="rotate(-22 180.0 308)" fill="#F08A24"/><ellipse cx="231.0" cy="274" rx="23" ry="17.5" transform="rotate(-22 231.0 274)" fill="#2F6BDB"/><ellipse cx="282.0" cy="240" rx="23" ry="17.5" transform="rotate(-22 282.0 240)" fill="#1F8F4E"/><ellipse cx="333.0" cy="206" rx="23" ry="17.5" transform="rotate(-22 333.0 206)" fill="#D93636"/></g></svg>Shed Deck</h1>
+<g stroke="#D9DFEB" stroke-width="6" stroke-linecap="round"><line x1="122.0" x2="390.0" y1="206" y2="206"/><line x1="122.0" x2="390.0" y1="240" y2="240"/><line x1="122.0" x2="390.0" y1="274" y2="274"/><line x1="122.0" x2="390.0" y1="308" y2="308"/></g><ellipse cx="180.0" cy="308" rx="23" ry="17.5" transform="rotate(-22 180.0 308)" fill="#F08A24"/><ellipse cx="231.0" cy="274" rx="23" ry="17.5" transform="rotate(-22 231.0 274)" fill="#2F6BDB"/><ellipse cx="282.0" cy="240" rx="23" ry="17.5" transform="rotate(-22 282.0 240)" fill="#1F8F4E"/><ellipse cx="333.0" cy="206" rx="23" ry="17.5" transform="rotate(-22 333.0 206)" fill="#D93636"/></g></svg>Note Cards</h1>
         <button class="icon-btn" id="menu-btn" type="button" aria-label="Ratings and help" aria-haspopup="dialog" aria-controls="menu"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="4.5" cy="10" r="1.7" fill="currentColor"/><circle cx="10" cy="10" r="1.7" fill="currentColor"/><circle cx="15.5" cy="10" r="1.7" fill="currentColor"/></svg></button>
       </div>
     </header>
@@ -514,7 +514,7 @@ button{font:inherit;color:inherit;-webkit-user-select:none;user-select:none;touc
 <dialog class="sheet" id="menu" aria-labelledby="menu-title">
   <div class="sheet-in">
     <span class="grab" aria-hidden="true"></span>
-    <div class="sheet-head"><h2 class="sheet-title" id="menu-title">Shed Deck</h2><button class="icon-btn" type="button" data-close aria-label="Close"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5l9 9m0-9-9 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
+    <div class="sheet-head"><h2 class="sheet-title" id="menu-title">Note Cards</h2><button class="icon-btn" type="button" data-close aria-label="Close"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5l9 9m0-9-9 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
     <ol class="steps">
       <li><span><b>Pick your cards.</b> Turn decks on and open one to choose keys, qualities and voicings.</span></li>
       <li><span><b>Play what comes up.</b> Tap the card to flip it and check the notes, shapes and sound.</span></li>
@@ -821,7 +821,7 @@ const DECK = Object.fromEntries(DECKS.map(d => [d.id, d]));
 const TIMERS = [0, 5, 10, 15, 30];
 
 // ---------- settings (this browser only: deck choices, timer, diagrams) ----------
-const STORE = 'shed-deck:v1';
+const STORE = 'shed-deck:v1'; // storage keys keep the old name so saved settings and ratings carry over
 const OPTIONS = { status: STATUS_GROUP.items.map(it => it.id) };
 DECKS.forEach(d => d.groups.forEach(g => { OPTIONS[g.key] = g.items.map(it => it.id); }));
 const DEFAULTS = Object.assign({}, OPTIONS, { triadQ: ['maj','min','aug','dim'], sevInv: ['root'], arpStart: ['s1'] });
@@ -919,14 +919,14 @@ function backupRatings() {
   const d = new Date();
   const stamp = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   const data = { app: 'shed-deck', version: 1, exportedAt: d.toISOString(), progress: Object.fromEntries(SAVED) };
-  shareFile('shed-deck-ratings-' + stamp + '.json', JSON.stringify(data, null, 2), 'application/json')
+  shareFile('note-cards-ratings-' + stamp + '.json', JSON.stringify(data, null, 2), 'application/json')
     .then(r => { if (r === 'saved') toast('Backup saved.'); });
 }
 function importRatings(file) {
   const reader = new FileReader();
   reader.onload = () => {
     let data;
-    try { data = JSON.parse(reader.result); } catch (e) { toast("That file isn't a Shed Deck backup."); return; }
+    try { data = JSON.parse(reader.result); } catch (e) { toast("That file isn't a Note Cards backup."); return; }
     const src = data && typeof data.progress === 'object' ? data.progress : data;
     if (!src || typeof src !== 'object') { toast('No ratings found in that file.'); return; }
     let added = 0, updated = 0;
